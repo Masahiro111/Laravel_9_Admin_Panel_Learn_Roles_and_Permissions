@@ -19,3 +19,19 @@ env ファイルを編集してデータベース環境を整える。
 php artisan migrate
 ```
 
+## Laravel Breeze のインストール
+
+Laravel Breeze のインストールのコマンドを以下のように入力
+
+```
+composer require laravel/breeze --dev
+
+php artisan breeze:install
+
+php artisan migrate:fresh
+
+npm install
+
+npm run dev
+```
+
