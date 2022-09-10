@@ -145,3 +145,122 @@ php artisan make:migration add_foregin_role_id_for_users --table=users
 ```
 php artisan migrate:fresh
 ```
+
+## Admin シーダーの作成
+
+まず、`Role` モデルを編集して 書き込みができるカラムとリレーションを設定する
+
+`app\Models\Role.php`
+
+```diff
+    // ...
+
+    class Role extends Model
+    {
+        use HasFactory;
+
++       protected $fillable = [
++           'name',
++       ];
++
++       public function users()
++       {
++           return $this->hasMany(User::class);
++       }
+    }
+```
+
+`app\Models\Permission.php` も同様に編集
+
+```diff
+    // ...
+
+    class Permission extends Model
+    {
+        use HasFactory;
+
++       protected $fillable = [
++           'name',
++       ];
+    }
+```
+
+`app\Models\User.php` を編集する。書き込みカラムとリレーションの編集をする
+
+```diff
+    // ...
+
+    class User extends Authenticatable
+    {
+        use HasApiTokens, HasFactory, Notifiable;
+        
+        protected $fillable = [
+            'name',
+            'email',
+            'password',
++           'role_id',
+        ];
+
+        // ...
+
++       public function role()
++       {
++           return $this->belongsTo(Role::class);
++       }
+    }
+```
+
+管理者用のシーダーを作成する。以下のコマンドを入力
+
+```
+php artisan make:seeder AdminSeeder
+```
+
+作成された `database\seeders\AdminSeeder.php` を以下のように編集
+
+```diff
+    // ...
+
+    class AdminSeeder extends Seeder
+    {
+        public function run()
+        {
++           $userRole = Role::create([
++               'name' => 'user',
++           ]);
++
++           $adminRole = Role::create([
++               'name' => 'admin',
++           ]);
++
++           User::query()
++               ->create([
++                   'name' => 'Admin',
++                   'email' => 'admin@example.com',
++                   'password' => bcrypt('password'),
++                   'email_verified_at' => now(),
++                   'role_id' => $adminRole->id,
++               ]);
+        }
+    }
+```
+
+シーダーを有効にするため `database\seeders\DatabaseSeeder.php` を編集
+
+```diff
+    // ...
+
+    class DatabaseSeeder extends Seeder
+    {
+        public function run()
+        {
++           $this->call(AdminSeeder::class);
+        }
+    }
+```
+
+マイグレーションを再実行する。同時にシーダーのインサート情報も有効にするために以下のコマンドを入力
+
+```
+php artisan migrate:fresh --seed
+```
