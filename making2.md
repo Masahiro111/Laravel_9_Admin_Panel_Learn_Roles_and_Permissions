@@ -264,3 +264,26 @@ php artisan make:seeder AdminSeeder
 ```
 php artisan migrate:fresh --seed
 ```
+
+新規にユーザーを登録する際は `role_id` の情報をデータベースに登録する必要があるため `app\Http\Controllers\Auth\RegisteredUserController.php` を編集
+
+```diff
+class RegisteredUserController extends Controller
+{
+    // ...
+
+    public function store(Request $request)
+    {
+        // ...
+
+        $user = User::create([
++           'role_id' => 1,
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        // ...
+    }
+}
+```
