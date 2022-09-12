@@ -491,3 +491,123 @@ php artisan make:controller Admin/AdminController
     require __DIR__ . '/auth.php';
 ```
 
+## 管理者用のミドルウェアを作成
+
+管理者のアクセスを制御するミドルウェアを作成。以下のコマンドを入力
+
+```
+php artisan make:middleware AdminMiddleware
+```
+
+作成された `app\Http\Middleware\AdminMiddleware.php` を編集
+
+```diff
+    class AdminMiddleware
+    {
+        public function handle(Request $request, Closure $next)
+        {
++           if (!auth()->user() || !auth()->user()->isAdmin()) {
++               abort(403);
++           }
+
+            return $next($request);
+        }
+    }
+```
+
+`User.php` を編集して `isAdmin` メソッドを作成
+
+```diff
+    // ...
+
+    class User extends Authenticatable
+    {
+        // ...
+
++       public function isAdmin(): bool
++       {
++           return $this->role()->where('name', 'admin')->exists();
++       }
+    }
+```
+
+ミドルウェアが有効になるように `app\Http\Kernel.php` を編集
+
+```diff
+    // ...
+
+    class Kernel extends HttpKernel
+    {
+        // ...
+
+        protected $routeMiddleware = [
+            'auth' => \App\Http\Middleware\Authenticate::class,
+            'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+            'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
+            'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+            'can' => \Illuminate\Auth\Middleware\Authorize::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+            'signed' => \App\Http\Middleware\ValidateSignature::class,
+            'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
++           'is_admin' => AdminMiddleware::class,
+        ];
+    }
+```
+
+ルート設定でミドルウェアが有効になるように `web.php` を編集
+
+```diff
+    // ...
+
+    Route::get('/', function () {
+        return view('welcome');
+    });
+
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware(['auth'])->name('dashboard');
+
+-   Route::middleware(['auth'])->group(function () {
++   Route::middleware(['auth', 'is_admin'])->group(function () {
+        Route::get('/admin', [AdminController::class, 'index'])
+            ->name('admin.index');
+    });
+
+    require __DIR__ . '/auth.php';
+```
+
+管理者のみ管理者ページを閲覧できるように ナビゲーションページのリンクを編集
+
+```diff
+    // ...
+    <!-- Navigation Links -->
+    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            {{ __('Dashboard') }}
+        </x-nav-link>
+
++       @if (Auth::user()->isAdmin())
++       <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
++           {{ __('Admin') }}
++       </x-nav-link>
++       @endif
+    </div>
+
+    // ...
+
+    <div class="pt-2 pb-3 space-y-1">
+        <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            {{ __('Dashboard') }}
+        </x-responsive-nav-link>
+
++       @if (Auth::user()->isAdmin())
++       <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
++           {{ __('Admin') }}
++       </x-responsive-nav-link>
++       @endif
+    </div>
+
+    // ...
+```
