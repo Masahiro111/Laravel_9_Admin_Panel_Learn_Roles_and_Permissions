@@ -16,12 +16,11 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
 
-                    @if (Auth::user()->isAdmin())
+                    @if (Auth::user()->hasRole('admin'))
                     <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
                         {{ __('Admin') }}
                     </x-nav-link>
                     @endif
-
                 </div>
             </div>
 
@@ -74,7 +73,7 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
 
-            @if (Auth::user()->isAdmin())
+            @if (Auth::user()->hasRole('admin'))
             <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
                 {{ __('Admin') }}
             </x-responsive-nav-link>

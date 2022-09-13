@@ -611,3 +611,129 @@ php artisan make:middleware AdminMiddleware
 
     // ...
 ```
+
+## 複数の Role を１つのミドルウェアで扱えるようにする
+
+１つのミドルウェアで複数の Role を扱えるように新しくミドルウェアを作成
+
+```
+php artisan make:middleware HasRoleMiddleware
+```
+
+作成された `app\Http\Middleware\HasRoleMiddleware.php` を編集
+
+```diff
+    // ...
+
+    class HasRoleMiddleware
+    {
+-       public function handle(Request $request, Closure $next)
++       public function handle(Request $request, Closure $next, string $role)
+        {
++           if (!auth()->user() || !auth()->user()->hasRole($role)) {
++               abort(403);
++           }
+            return $next($request);
+        }
+    }
+```
+
+User モデルに hasRole メソッドを作成。`app\Models\User.php` を編集
+
+```diff
+    // ...
+
+    class User extends Authenticatable
+    {
+        // ...
+
++       public function hasRole($name): bool
++       {
++           return $this->role()->where('name', $name)->exists();
++       }
+    }
+```
+
+ミドルウェアを使用できるように `app\Http\Kernel.php` を編集
+
+```diff
+    // ...
+    class Kernel extends HttpKernel
+    {
+        // ...
+
+        protected $routeMiddleware = [
+            'auth' => \App\Http\Middleware\Authenticate::class,
+            'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+            'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
+            'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,
+            'can' => \Illuminate\Auth\Middleware\Authorize::class,
+            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'password.confirm' => \Illuminate\Auth\Middleware\RequirePassword::class,
+            'signed' => \App\Http\Middleware\ValidateSignature::class,
+            'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+            'is_admin' => AdminMiddleware::class,
++           'role' => HasRoleMiddleware::class,
+        ];
+    }
+```
+
+ルートを編集。`routes\web.php` を編集
+
+```diff
+    Route::get('/', function () {
+        return view('welcome');
+    });
+
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware(['auth'])->name('dashboard');
+
++   Route::middleware(['auth', 'role:admin'])->group(function () {
++       Route::get('/admin', [AdminController::class, 'index'])
++           ->name('admin.index');
++   });
++
++   Route::middleware(['auth', 'role:writer'])->group(function () {
++       Route::get('/writers', [AdminController::class, 'index'])
++           ->name('admin.index');
++   });
+
+    require __DIR__ . '/auth.php';
+```
+
+ナビゲーションを編集。`resources\views\layouts\navigation.blade.php` を編集
+
+```diff
+    // ...
+
+    <!-- Navigation Links -->
+    <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
+        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+            {{ __('Dashboard') }}
+        </x-nav-link>
+
++       @if (Auth::user()->hasRole('admin'))
+        <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
+            {{ __('Admin') }}
+        </x-nav-link>
+        @endif
+    </div>
+
+    // ...
+
+    <!-- Responsive Navigation Menu -->
+    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
+        <div class="pt-2 pb-3 space-y-1">
+            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                {{ __('Dashboard') }}
+            </x-responsive-nav-link>
+
++           @if (Auth::user()->hasRole('admin'))
+            <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index')">
+                {{ __('Admin') }}
+            </x-responsive-nav-link>
+            @endif
+        </div>
+```
