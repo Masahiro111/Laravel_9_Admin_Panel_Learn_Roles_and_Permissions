@@ -737,3 +737,143 @@ User モデルに hasRole メソッドを作成。`app\Models\User.php` を編�
             @endif
         </div>
 ```
+
+## Roles と Permissions のルートを作成
+
+Role の管理画面用のコントローラーを作成。以下のコマンドを入力
+
+```
+php artisan make:controller Admin/RoleController
+```
+
+Permission の管理画面用のコントローラーを作成。以下のコマンドを入力
+
+```
+php artisan make:controller Admin/PermissionController
+```
+
+作成した `app\Http\Controllers\Admin\RoleController.php` を編集
+
+```diff
+    // ...
+
+    class RoleController extends Controller
+    {
++       public function index()
++       {
++           $roles = Role::all();
++
++           return view('admin.roles.index', compact('roles'));
++       }
+    }
+```
+
+作成した `app\Http\Controllers\Admin\PermissionController.php` を編集
+
+```diff
+    // ...
+
+    class PermissionController extends Controller
+    {
++       public function index()
++       {
++           $permissions = Permission::all();
++
++           return view('admin.permissions.index', compact('permissions'));
++       }
+    }
+```
+
+`resources\views\admin\roles\index.blade.php` を新規に作成して以下のように編集
+
+```html
+<x-admin-layout>
+    <h1>Roles index</h1>
+</x-admin-layout>
+```
+
+`resources\views\admin\permissions\index.blade.php` を新規に作成して以下のように編集
+
+```html
+<x-admin-layout>
+    <h1>permission index</h1>
+</x-admin-layout>
+```
+
+`resources\views\components\admin-layout.blade.php` を編集
+
+```diff
+    // ...
+
+    <body>
+        <div x-data="{ sidebarOpen: false }" class="flex h-screen bg-gray-200 font-roboto">
+            @include('layouts.sidebar')
+
+            <div class="flex-1 flex flex-col overflow-hidden">
+                @include('layouts.header')
+
+                <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200">
+                    <div class="container mx-auto px-6 py-8">
++                       {{ $slot }}
+                    </div>
+                </main>
+            </div>
+        </div>
+    </body>
+```
+
+`resources\views\layouts\sidebar.blade.php` を編集
+
+```diff
+    // ...
+    
+    <nav class="mt-10">
+        <a class="flex items-center px-6 py-2 mt-4 text-gray-100 bg-gray-700 bg-opacity-25" href="{{ route('dashboard') }}">
+            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+            <span class="mx-3">Dashboard</span>
+        </a>
+
++       <a class="flex items-center px-6 py-2 mt-4 text-gray-100 bg-gray-700 bg-opacity-25" href="{{ route('admin.roles.index')}}">
++           <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
++               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
++               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
++           </svg>
++           <span class="mx-3">Roles</span>
++       </a>
++
++       <a class="flex items-center px-6 py-2 mt-4 text-gray-100 bg-gray-700 bg-opacity-25" href="{{ route('admin.permissions.index') }}">
++           <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
++               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
++               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
++           </svg>
++           <span class="mx-3">Permissions</span>
++       </a>
+
+    </nav>
+```
+
+ルートを以下のように編集。`routes/web.php` を編集
+
+```php
+Route::get('/', function () {
+    return view('welcome');
+});
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth'])->name('dashboard');
+
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/', [AdminController::class, 'index'])
+        ->name('index');
+
+    Route::resource('roles', RoleController::class);
+
+    Route::resource('permissions', PermissionController::class);
+});
+
+require __DIR__ . '/auth.php';
+```
