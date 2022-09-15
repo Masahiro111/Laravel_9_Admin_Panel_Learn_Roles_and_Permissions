@@ -981,3 +981,93 @@ Roles と Permissions ページのレイアウトを作成する。
 +       </div>
     </x-admin-layout>
 ```
+
+## Roles と Permissions ページの新規入力画面を作成する
+
+コントローラーに Role と Permission ページに create アクションを追加。`app\Http\Controllers\Admin\RoleController.php` を編集
+
+```diff
+    // ...
+
+    class RoleController extends Controller
+    {
+        // ...
+
++       public function create()
++       {
++           return view('admin.roles.create');
++       }
+    }
+```
+
+`app\Http\Controllers\Admin\PermissionController.php` を編集
+
+```diff
+    // ...
+
+    class PermissionController extends Controller
+    {
+        // ...
+
++       public function create()
++       {
++           return view('admin.permissions.create');
++       }
+}
+```
+
+新規に `resources\views\admin\roles\create.blade.php` を作成。以下のように編集
+
+```html
+<x-admin-layout>
+    <div class="px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-xl font-semibold text-gray-900">Roles</h1>
+                <p class="mt-2 text-sm text-gray-700">Role を新規作成します</p>
+            </div>
+            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Back</a>
+            </div>
+        </div>
+        <h1>Form</h1>
+    </div>
+</x-admin-layout>
+```
+
+新規に `resources\views\admin\permissions\create.blade.php` を作成。以下のように編集
+
+```html
+<x-admin-layout>
+    <div class="px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-xl font-semibold text-gray-900">Permissions</h1>
+                <p class="mt-2 text-sm text-gray-700">Permission を新規に作成します</p>
+            </div>
+            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <a href="{{ route('admin.permissions.index') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Back</a>
+            </div>
+        </div>
+        <h1>Form</h1>
+    </div>
+</x-admin-layout>
+```
+
+新規追加ページのリンクを index.blade.php に追加する。`resources\views\admin\roles\index.blade.php` を編集
+
+```diff
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+-       <button type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Add user</button>
++       <a href="{{ route('admin.roles.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Add Role</a>
+    </div>
+```
+
+`resources\views\admin\permissions\index.blade.php` を編集
+
+```diff
+    <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+-       <button type="button" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Add user</button>
++       <a href="{{ route('admin.permissions.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Add Permission</a>
+    </div>
+```
