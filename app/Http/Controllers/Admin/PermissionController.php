@@ -19,4 +19,15 @@ class PermissionController extends Controller
     {
         return view('admin.permissions.create');
     }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|min:3',
+        ]);
+
+        Permission::query()->create($validated);
+
+        return redirect()->route('admin.permissions.index');
+    }
 }

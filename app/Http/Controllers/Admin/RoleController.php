@@ -19,4 +19,15 @@ class RoleController extends Controller
     {
         return view('admin.roles.create');
     }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|min:3',
+        ]);
+
+        Role::query()->create($validated);
+
+        return redirect()->route('admin.roles.index');
+    }
 }
