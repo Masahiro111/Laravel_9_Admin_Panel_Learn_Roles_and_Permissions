@@ -1200,3 +1200,177 @@ Roles と Permissions ページのレイアウトを作成する。
     </x-admin-layout>
 ```
 
+## Role と Permission の更新
+
+`app\Http\Controllers\Admin\RoleController.php` を編集
+
+```diff
+    // ...
+
+    class RoleController extends Controller
+    {
+        // ...
+
++       public function update(Request $request, Role $role)
++       {
++           $validated = $request->validate([
++               'name' => 'required|min:3',
++           ]);
++
++           $role->update($validated);
++
++           return redirect()->route('admin.roles.index');
++       }
+    }
+```
+
+`app\Http\Controllers\Admin\PermissionController.php` を編集
+
+```diff
+    // ...
+
+    class PermissionController extends Controller
+    {
+        // ...
+
++       public function update(Request $request, Permission $permission)
++       {
++           $validated = $request->validate([
++               'name' => 'required|min:3',
++           ]);
++
++           $permission->update($validated);
++
++           return redirect()->route('admin.permissions.index');
++       }
+    }
+```
+
+新規に `resources\views\admin\roles\edit.blade.php` を作成。以下のように編集。
+
+```html
+<x-admin-layout>
+    <div class="px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-xl font-semibold text-gray-900">Roles</h1>
+                <p class="mt-2 text-sm text-gray-700">Role を新規作成します</p>
+            </div>
+            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <a href="{{ route('admin.roles.index') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Back</a>
+            </div>
+        </div>
+
+        <div class="flex min-h-full flex-col justify-center sm:px-6 lg:px-8">
+            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    <form class="space-y-6" action="{{ route('admin.roles.update', $role) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <div class="mt-1">
+                                <input id="name" name="name" type="text" autocomplete="name" value="{{ $role->name }}" required class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                                @error('name')
+                                <span class="text-sm text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div>
+                            <button type="submit" class="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">更新</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</x-admin-layout>
+```
+
+新規に `resources\views\admin\permissions\edit.blade.php` を作成。以下のように編集。
+
+```html
+<x-admin-layout>
+    <div class="px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-xl font-semibold text-gray-900">Permissions</h1>
+                <p class="mt-2 text-sm text-gray-700">Permission を更新します</p>
+            </div>
+            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+                <a href="{{ route('admin.permissions.index') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Back</a>
+            </div>
+        </div>
+
+        <div class="flex min-h-full flex-col justify-center sm:px-6 lg:px-8">
+            <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+                <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+                    <form class="space-y-6" action="{{ route('admin.permissions.update', $permission) }}" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Name</label>
+                            <div class="mt-1">
+                                <input id="name" name="name" type="text" autocomplete="name" required value="{{ $permission->name }}" class="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm">
+                                @error('name')
+                                <span class="text-sm text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                        <div>
+                            <button type="submit" class="flex w-full justify-center rounded-md border border-transparent bg-indigo-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">更新</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</x-admin-layout>
+```
+
+`resources\views\admin\roles\index.blade.php` を編集
+
+```diff
+    // ...
+
+    @forelse ($roles as $role)
+    <tr>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $role->id }}
+        </td>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $role->name }}
+        </td>
+        <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+-           <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>
++           <a href="{{ route('admin.roles.edit', $role) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+        </td>
+    </tr>
+    @empty
+    @endforelse
+```
+
+`resources\views\admin\permissions\index.blade.php` を編集
+
+```diff
+    // ...
+    
+    @forelse ($permissions as $permission)
+    <tr>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $permission->id }}
+        </td>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $permission->name }}
+        </td>
+        <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+-           <a href="#" class="text-indigo-600 hover:text-indigo-900">Edit</a>        
++           <a href="{{ route('admin.permissions.edit', $permission) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+        </td>
+    </tr>
+    @empty
+    @endforelse
+```
+
