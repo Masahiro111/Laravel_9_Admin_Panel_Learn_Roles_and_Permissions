@@ -10,7 +10,8 @@ class RoleController extends Controller
 {
     public function index()
     {
-        $roles = Role::all();
+        // $roles = Role::all();
+        $roles = Role::query()->whereNot('name', 'admin')->latest()->get();
 
         return view('admin.roles.index', compact('roles'));
     }
@@ -28,7 +29,8 @@ class RoleController extends Controller
 
         Role::query()->create($validated);
 
-        return redirect()->route('admin.roles.index');
+        return redirect()->route('admin.roles.index')
+            ->with('message', 'Role Added!');
     }
 
     public function edit(Role $role)
@@ -44,6 +46,15 @@ class RoleController extends Controller
 
         $role->update($validated);
 
-        return redirect()->route('admin.roles.index');
+        return redirect()->route('admin.roles.index')
+            ->with('message', 'Role is updated!');
+    }
+
+    public function destroy(Role $role)
+    {
+        $role->delete();
+
+        return redirect()->route('admin.roles.index')
+            ->with('message', 'The Role deleted');
     }
 }

@@ -30,8 +30,16 @@
                         <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
                             {{ $permission->name }}
                         </td>
-                        <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                            <a href="{{ route('admin.permissions.edit', $permission) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                        <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
+                            <a href="{{ route('admin.permissions.edit', $permission) }}" class="text-indigo-600 hover:text-indigo-900 pl-2 pr-2">Edit</a>
+                            <form
+                                  method="post"
+                                  action="{{ route('admin.permissions.destroy', $permission) }}"
+                                  onsubmit="return confirm('Are you sure?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
+                            </form>
                         </td>
                     </tr>
                     @empty

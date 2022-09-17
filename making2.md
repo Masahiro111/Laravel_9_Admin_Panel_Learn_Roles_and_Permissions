@@ -1374,3 +1374,230 @@ Roles と Permissions ページのレイアウトを作成する。
     @endforelse
 ```
 
+## Role と Permission の削除処理
+
+Role と Permission の削除を行う処理を記入。`app\Http\Controllers\Admin\RoleController.php` を以下のように編集
+
+```diff
+    // ...
+
+    class RoleController extends Controller
+    {
+        public function index()
+        {
+-           $roles = Role::all();
++           $roles = Role::query()->whereNot('name', 'admin')->latest()->get();
+
+            return view('admin.roles.index', compact('roles'));
+        }
+
+        public function create()
+        {
+            return view('admin.roles.create');
+        }
+
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'name' => 'required|min:3',
+            ]);
+
+            Role::query()->create($validated);
+
+-           return redirect()->route('admin.roles.index');
++           return redirect()->route('admin.roles.index')
++               ->with('message', 'Role Added!');
+        }
+
+        public function edit(Role $role)
+        {
+            return view('admin.role.edit', compact('role'));
+        }
+
+        public function update(Request $request, Role $role)
+        {
+            $validated = $request->validate([
+                'name' => 'required|min:3',
+            ]);
+
+            $role->update($validated);
+            
+-           return redirect()->route('admin.roles.index');
++           return redirect()->route('admin.roles.index')
++               ->with('message', 'Role is updated!');
+        }
+
++       public function destroy(Role $role)
++       {
++           $role->delete();
++
+-           return redirect()->route('admin.roles.index');
++           return redirect()->route('admin.roles.index')
++               ->with('message', 'The Role deleted');
++       }
+    }
+```
+
+`app\Http\Controllers\Admin\PermissionController.php` を以下のように編集
+
+```diff
+    // ...
+
+    class PermissionController extends Controller
+    {
+        public function index()
+        {
+-           $permissions = Permission::query()->all();
++           $permissions = Permission::query()->latest()->get();
+
+            return view('admin.permissions.index', compact('permissions'));
+        }
+
+        public function create()
+        {
+            return view('admin.permissions.create');
+        }
+
+        public function store(Request $request)
+        {
+            $validated = $request->validate([
+                'name' => 'required|min:3',
+            ]);
+
+            Permission::query()->create($validated);
+
+-           return redirect()->route('admin.permissions.index');
++           return redirect()->route('admin.permissions.index')
++               ->with('message', 'Permission Added!');
+        }
+
+        public function edit(Permission $permission)
+        {
+            return view('admin.permissions.edit', compact('permission'));
+        }
+
+        public function update(Request $request, Permission $permission)
+        {
+            $validated = $request->validate([
+                'name' => 'required|min:3',
+            ]);
+
+            $permission->update($validated);
+
+-           return redirect()->route('admin.permissions.index');
++           return redirect()->route('admin.permissions.index')
++               ->with('message', 'Permission is updated!');
+        }
+
++       public function destroy(Permission $permission)
++       {
++           $permission->delete();
++
++           return redirect()->route('admin.permissions.index')
++               ->with('message', 'The Permission deleted');
++       }
+    }
+```
+
+`resources\views\admin\roles\index.blade.php` を編集。削除用のリンクを作成
+
+```diff
+    // ...
+
+    @forelse ($roles as $role)
+    <tr>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $role->id }}
+        </td>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $role->name }}
+        </td>
+-       <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
++       <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
+            <a href="{{ route('admin.roles.edit', $role) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
++           <form
++                   method="post"
++                   action="{{ route('admin.roles.destroy', $role) }}"
++                   onsubmit="return confirm('Are you sure?')">
++               @csrf
++               @method('DELETE')
++               <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
++           </form>
+        </td>
+    </tr>
+    @empty
+    @endforelse
+
+    // ...
+```
+
+`resources\views\admin\permissions\index.blade.php` を編集。削除用のリンクを作成
+
+```diff
+    // ...
+
+    @forelse ($permissions as $permission)
+    <tr>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $permission->id }}
+        </td>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $permission->name }}
+        </td>
+-       <td class="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
++       <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
+            <a href="{{ route('admin.permissions.edit', $permission) }}" class="text-indigo-600 hover:text-indigo-900 pl-2 pr-2">Edit</a>
++           <form
++                   method="post"
++                   action="{{ route('admin.permissions.destroy', $permission) }}"
++                   onsubmit="return confirm('Are you sure?')">
++               @csrf
++               @method('DELETE')
++               <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
++           </form>
+        </td>
+    </tr>
+    @empty
+    @endforelse
+
+    // ...
+```
+
+処理を行ったメッセージを表示するレイアウトを作成。`resources\views\components\admin-layout.blade.php` を編集
+
+```diff
+    // ...
+    <body>
++       @if (Session::has('message'))
++       <!-- This example requires Tailwind CSS v2.0+ -->
++       <div
++            class="bg-indigo-600"
++            x-data="{ bannerOpen: true }"
++            x-show="bannerOpen">
++           <div class="mx-auto max-w-7xl py-3 px-3 sm:px-6 lg:px-8">
++               <div class="flex flex-wrap items-center justify-between">
++                   <div class="flex w-0 flex-1 items-center">
++                       <p class="ml-3 truncate font-medium text-white">
++                           <span class="md:hidden">{{ Session::get('message') }}</span>
++                           <span class="hidden md:inline">{{ Session::get('message') }}</span>
++                       </p>
++                   </div>
++                   <div class="order-2 flex-shrink-0 sm:order-3 sm:ml-3">
++                       <button
++                               type="button"
++                               class="-mr-1 flex rounded-md p-2 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-white sm:-mr-2"
++                               x-on:click="bannerOpen = false">
++                           <span class="sr-only">Dismiss</span>
++                           <!-- Heroicon name: outline/x-mark -->
++                           <svg class="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
++                               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
++                           </svg>
++                       </button>
++                   </div>
++               </div>
++           </div>
++       </div>
++       @endif
+
+        // ...
+```
