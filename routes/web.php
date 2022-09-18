@@ -28,9 +28,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->grou
     Route::get('/', [AdminController::class, 'index'])
         ->name('index');
 
-    Route::resource('roles', RoleController::class);
+    Route::post('/roles/{role}/permissions', [RoleController::class, 'assignPermissions'])
+        ->name('roles.permissions');
 
-    Route::resource('permissions', PermissionController::class);
+    Route::resource('/roles', RoleController::class);
+
+    Route::resource('/permissions', PermissionController::class);
 });
 
 require __DIR__ . '/auth.php';
