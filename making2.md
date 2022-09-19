@@ -1724,4 +1724,203 @@ Permission のセレクトエリアを追記。`resources\views\admin\roles\edit
     require __DIR__ . '/auth.php';
 ```
 
+## Users の管理画面を作成
+
+Users を管理するコントローラーを作成。以下のコマンドを入力
+
+```
+php artisan make:controller Admin/UserController
+```
+
+作成された `app\Http\Controllers\Admin\UserController.php` を編集
+
+```diff
+    // ...
+
+    class UserController extends Controller
+    {
++       public function index()
++       {
++           $users = User::all();
++
++           return view('admin.users.index', compact('users'));
+        }
+    }
+```
+
+Users を表示するビューを作成。`resources\views\admin\users\index.blade.php` を作成し以下のように編集
+
+```html
+<x-admin-layout>
+    <div class="px-4 sm:px-6 lg:px-8">
+        <div class="sm:flex sm:items-center">
+            <div class="sm:flex-auto">
+                <h1 class="text-xl font-semibold text-gray-900">Users</h1>
+                <p class="mt-2 text-sm text-gray-700">User の一覧を表示しています</p>
+            </div>
+        </div>
+        <div class="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg">
+            <table class="min-w-full divide-y divide-gray-300">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 w-1 text-left text-sm font-semibold text-gray-900 sm:pl-6">ID</th>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Role</th>
+                        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                            <span class="sr-only">Edit</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+
+                    @forelse ($users as $user)
+                    <tr>
+                        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                            {{ $user->id }}
+                        </td>
+                        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                            {{ $user->name }}
+                        </td>
+                        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                            {{ $user->role->name }}
+                        </td>
+                        <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
+                            <a href="{{ route('admin.users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            <form
+                                  method="post"
+                                  action="{{ route('admin.users.destroy', $user) }}"
+                                  onsubmit="return confirm('Are you sure?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
+                            </form>
+                        </td>
+                    </tr>
+                    @empty
+                    @endforelse
+
+                    <!-- More people... -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</x-admin-layout>
+```
+
+users のルートを作成。`routes\web.php` を編集
+
+```diff
+    // ...
+
+    Route::get('/', function () {
+        return view('welcome');
+    });
+
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware(['auth'])->name('dashboard');
+
+    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/', [AdminController::class, 'index'])
+            ->name('index');
+
+        Route::post('/roles/{role}/permissions', [RoleController::class, 'assignPermissions'])
+            ->name('roles.permissions');
+
+        Route::resource('/roles', RoleController::class);
+
+        Route::resource('/permissions', PermissionController::class);
+
++       Route::resource('/users', UserController::class);
+    });
+
+    require __DIR__ . '/auth.php';
+```
+
+サイドバーも users のリンクを記入。`resources\views\layouts\sidebar.blade.php` を編集
+
+```diff
+    // ...
+    <nav class="mt-10">    
+        // ...
+        <a class="flex items-center px-6 py-2 mt-4 text-gray-100 bg-gray-700 bg-opacity-25" href="{{ route('admin.permissions.index') }}">
+            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+            </svg>
+
+            <span class="mx-3">Permissions</span>
+        </a>
+
++       <a class="flex items-center px-6 py-2 mt-4 text-gray-100 bg-gray-700 bg-opacity-25" href="{{ route('admin.users.index') }}">
++           <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
++               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
++               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
++           </svg>
++
++           <span class="mx-3">Users</span>
++       </a>
+
+    </nav>
+
+    // ...
+```
+
+Role ページのプレビューにて、各 Role の Permission を見ることができるようにする。`resources\views\admin\roles\index.blade.php` を編集
+
+```diff
+    // ...
+
+    <table class="min-w-full divide-y divide-gray-300">
+        <thead class="bg-gray-50">
+            <tr>
+                <th scope="col" class="py-3.5 pl-4 pr-3 w-1 text-left text-sm font-semibold text-gray-900 sm:pl-6">ID</th>
+                <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
++               <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Permissions</th>
+                <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                    <span class="sr-only">Edit</span>
+                </th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+
+            @forelse ($roles as $role)
+            <tr>
+                <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                    {{ $role->id }}
+                </td>
+                <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+                    {{ $role->name }}
+                </td>
++               <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
++                   @forelse ($role->permissions as $rp)
++                   <span class="inline-flex items-center px-3 py-0.5 mr-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
++                       {{ $rp->name }}
++                   </span>
++                   @empty
++                   <span class="inline-flex items-center px-3 py-0.5 mr-1 rounded-full text-sm font-medium bg-red-100 text-red-800">No Permissions</span>
++                   @endforelse
++               </td>
+                <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
+                    <a href="{{ route('admin.roles.edit', $role) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                    <form
+                            method="post"
+                            action="{{ route('admin.roles.destroy', $role) }}"
+                            onsubmit="return confirm('Are you sure?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
+                    </form>
+                </td>
+            </tr>
+            @empty
+            @endforelse
+
+            <!-- More people... -->
+        </tbody>
+    </table>
+
+    // ...
+```
+
 

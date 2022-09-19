@@ -2,11 +2,8 @@
     <div class="px-4 sm:px-6 lg:px-8">
         <div class="sm:flex sm:items-center">
             <div class="sm:flex-auto">
-                <h1 class="text-xl font-semibold text-gray-900">Roles</h1>
-                <p class="mt-2 text-sm text-gray-700">Role のリストを表示しています</p>
-            </div>
-            <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-                <a href="{{ route('admin.roles.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Add Role</a>
+                <h1 class="text-xl font-semibold text-gray-900">Users</h1>
+                <p class="mt-2 text-sm text-gray-700">User の一覧を表示しています</p>
             </div>
         </div>
         <div class="-mx-4 mt-8 overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:-mx-6 md:mx-0 md:rounded-lg">
@@ -15,7 +12,7 @@
                     <tr>
                         <th scope="col" class="py-3.5 pl-4 pr-3 w-1 text-left text-sm font-semibold text-gray-900 sm:pl-6">ID</th>
                         <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Name</th>
-                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Permissions</th>
+                        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">Role</th>
                         <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
                             <span class="sr-only">Edit</span>
                         </th>
@@ -23,28 +20,22 @@
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
 
-                    @forelse ($roles as $role)
+                    @forelse ($users as $user)
                     <tr>
                         <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
-                            {{ $role->id }}
+                            {{ $user->id }}
                         </td>
                         <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
-                            {{ $role->name }}
+                            {{ $user->name }}
                         </td>
                         <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
-                            @forelse ($role->permissions as $rp)
-                            <span class="inline-flex items-center px-3 py-0.5 mr-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                                {{ $rp->name }}
-                            </span>
-                            @empty
-                            <span class="inline-flex items-center px-3 py-0.5 mr-1 rounded-full text-sm font-medium bg-red-100 text-red-800">No Permissions</span>
-                            @endforelse
+                            {{ $user->role->name }}
                         </td>
                         <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
-                            <a href="{{ route('admin.roles.edit', $role) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            <a href="{{ route('admin.users.edit', $user) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                             <form
                                   method="post"
-                                  action="{{ route('admin.roles.destroy', $role) }}"
+                                  action="{{ route('admin.users.destroy', $user) }}"
                                   onsubmit="return confirm('Are you sure?')">
                                 @csrf
                                 @method('DELETE')
