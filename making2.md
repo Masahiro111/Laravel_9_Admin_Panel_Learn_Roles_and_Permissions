@@ -2045,3 +2045,24 @@ php artisan make:request UserUpdateRequest
     </div>
 </x-admin-layout>
 ```
+
+## ユーザーの削除
+
+ユーザーの削除処理を行う。`app\Http\Controllers\Admin\UserController.php` を以下のように編集
+
+```diff
+    // ...
+
+    class UserController extends Controller
+    {
+        // ...
+
++       public function destroy(User $user)
++       {
++           $user->delete();
++
++           return redirect()->route('admin.users.index')
++               ->with('message', 'User deleted');
++       }
+    }
+```
