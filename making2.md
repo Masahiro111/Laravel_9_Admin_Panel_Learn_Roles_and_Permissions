@@ -2066,3 +2066,116 @@ php artisan make:request UserUpdateRequest
 +       }
     }
 ```
+
+## 記事情報の作成
+
+Post モデルとマイグレーションファイルを作成。以下のコマンドを入力
+
+```
+php artisan make:model Post -m
+```
+
+作成された `database\migrations\2022_09_20_084013_create_posts_table.php` を編集
+
+```diff
+    // ...
+
+    return new class extends Migration
+    {
+        public function up()
+        {
+            Schema::create('posts', function (Blueprint $table) {
+                $table->id();
++               $table->string('title');
++               $table->text('body');
+                $table->timestamps();
+            });
+        }
+
+        // ...
+    };
+```
+
+マイグレートを実行
+
+```
+php artisan migrate
+```
+
+PostController を作成。以下のコマンドを入力
+
+```
+php artisan make:controller PostController
+```
+
+記事情報を作成するためのファイルを作成。以下のコマンドを入力
+
+```
+php artisan make:factory PostFactory
+```
+
+`routes\web.php` を編集
+
+```diff
+    Route::get('/', function () {
+        return view('welcome');
+    });
+
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware(['auth'])->name('dashboard');
+
++   Route::resource('/posts', PostController::class);
+
+    Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin'])->group(function () {
+        Route::get('/', [AdminController::class, 'index'])
+            ->name('index');
+
+        Route::post('/roles/{role}/permissions', [RoleController::class, 'assignPermissions'])
+            ->name('roles.permissions');
+
+        Route::resource('/roles', RoleController::class);
+
+        Route::resource('/permissions', PermissionController::class);
+
+        Route::resource('/users', UserController::class);
+    });
+
+    require __DIR__ . '/auth.php';
+```
+
+作成された `database\factories\PostFactory.php` を編集
+
+```diff
+    // ...
+
+    class PostFactory extends Factory
+    {
+        public function definition()
+        {
+            return [
++               'title' => $this->faker->sentence(3),
++               'body' => $this->faker->paragraph(2),
+            ];
+        }
+    }
+```
+
+`database\seeders\DatabaseSeeder.php` に記事情報のクラスを追記
+
+```diff
+class DatabaseSeeder extends Seeder
+{
+    public function run()
+    {
++       Post::factory(10)->create();
+    }
+}
+```
+
+シードを実行。以下のコマンドを入力
+
+```
+php artisan db:seed
+```
+
