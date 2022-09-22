@@ -2289,3 +2289,51 @@ php artisan db:seed
 
     </html>
 ```
+
+## ポリシーの作成
+
+記事投稿のポリシーを作成。以下のコマンドを入力
+
+```
+php artisan make:policy PostPolicy --model=Post
+```
+
+作成された `app\Policies\PostPolicy.php` を編集
+
+```diff
+    // ...
+
+    class PostPolicy
+    {
+        // ...
+        public function create(User $user)
+        {
+            // dd($user->role); // Role モデルインスタンス
+            // dd($user->role()); // BelongsTo インスタンス
++           return $user->role->hasPermission('writer');
+        }
+        // ...
+    }
+```
+
+記事の新規作成ボタンを表示するかの処理を追加。 `resources\views\posts\index.blade.php` を編集
+
+```diff
+    <x-guest-layout>
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="sm:flex sm:items-center">
+                <div class="sm:flex-auto">
+                    <h1 class="text-xl font-semibold text-gray-900">Posts</h1>
+                    <p class="mt-2 text-sm text-gray-700">Post 情報を表示 </p>
+                </div>
+
++               @can('create', App\Models\Post::class)
++               <div class="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
++                   <a href="{{ route('posts.create') }}" class="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">Add post</a>
++               </div>
++               @endcan
+
+            </div>
+
+            // ...
+```
