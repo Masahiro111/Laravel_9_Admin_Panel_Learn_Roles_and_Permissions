@@ -2442,3 +2442,25 @@ php artisan make:policy PostPolicy --model=Post
 +       ];
     }
 ```
+
+## スーパーユーザーの記事投稿許可を追加
+
+スーパーユーザー管理者は記事の追加ができるように編集。`app\Policies\PostPolicy.php` を編集
+
+```diff
+    // ...
+
+    class PostPolicy
+    {
+        use HandlesAuthorization;
+
++       public function before(User $user, $ability)
++       {
++           if ($user->hasRole('admin')) {
++               return true;
++           }
++       }
+
+        // ...
+    }
+```
