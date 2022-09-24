@@ -35,4 +35,34 @@ class PostController extends Controller
 
         return redirect()->route('posts.index');
     }
+
+    public function edit(Post $post)
+    {
+        $this->authorize('update', Post::class);
+
+        return view('posts.edit', compact('post'));
+    }
+
+    public function update(Request $request, Post $post)
+    {
+        $this->authorize('update', Post::class);
+
+        $validated = $request->validate([
+            'title' => 'required',
+            'body' => 'required',
+        ]);
+
+        $post->update($validated);
+
+        return redirect()->route('posts.index');
+    }
+
+    public function destroy(Post $post)
+    {
+        $this->authorize('delete', Post::class);
+
+        $post->delete();
+
+        return redirect()->route('posts.index');
+    }
 }

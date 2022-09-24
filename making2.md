@@ -2464,3 +2464,183 @@ php artisan make:policy PostPolicy --model=Post
         // ...
     }
 ```
+
+## 更新と削除の認証追加
+
+`` を編集
+
+```diff
+    // ...
+
+    class PostController extends Controller
+    {
+        // ...
+
++       public function edit(Post $post)
++       {
++           $this->authorize('update', Post::class);
++
++           return view('posts.edit', compact('post'));
++       }
++
++       public function update(Request $request, Post $post)
++       {
++           $this->authorize('update', Post::class);
++
++           $validated = $request->validate([
++               'title' => 'required',
++               'body' => 'required',
++           ]);
++
++           $post->update($validated);
++
++           return redirect()->route('posts.index');
++       }
++
++       public function destroy(Post $post)
++       {
++           $this->authorize('delete', Post::class);
++
++           $post->delete();
++
++           return redirect()->route('posts.index');
++       }
+    }
+```
+
+`app\Policies\PostPolicy.php` を編集
+
+```diff
+    // ...
+
+    public function create(User $user)
+    {
+        // dd($user->role); // Role モデルインスタンス
+        // dd($user->role()); // BelongsTo インスタンス
+-       return $user->role->hasPermission('writer');
++       return $user->role->hasPermission('create');
+    }
+
+    public function update(User $user, Post $post)
+    {
++       return $user->role->hasPermission('update');
+    }
+
+    public function delete(User $user, Post $post)
+    {
++       return $user->role->hasPermission('delete');
+    }
+
+    // ...
+}
+```
+
+`resources\views\posts\create.blade.php` を編集
+
+```diff
+    <x-guest-layout>
+        <div class="mt-12 max-w-6xl mx-auto">
+-           @can('create', App\Models\Post::class)
++           @can('create')
+            <div class="flex m-2 p-2">
+                <a href="{{ route('posts.index') }}" class="px-4 py-2 bg-indigo-400 hover:bg-indigo-600 rounded">
+                    Posts Index</a>
+            </div>
+
+            // ...
+    </x-guest-layout>
+```
+
+`resources\views\posts\edit.blade.php` を新規に作成して編集
+
+```html
+<x-guest-layout>
+    <div class="mt-12 max-w-6xl mx-auto">
+        @can('update')
+        <div class="flex m-2 p-2">
+            <a href="{{ route('posts.index') }}" class="px-4 py-2 bg-indigo-400 hover:bg-indigo-600 rounded">
+                Posts Index</a>
+        </div>
+        @endcan
+        <div class="max-w-md mx-auto p-4">
+            <form class="space-y-5" method="POST" action="{{ route('posts.update', $post) }}">
+                @csrf
+                @method('PUT')
+                <div>
+                    <label for="title" class="text-xl">Title</label>
+                    <input
+                           id="title"
+                           type="text"
+                           name="title"
+                           class="block w-full py-3 px-3 mt-2
+                            text-gray-800 appearance-none
+                            border-2 border-gray-100
+                            focus:text-gray-500 focus:outline-none focus:border-gray-200 rounded-md"
+                           value="{{ $post->title }}" />
+                    @error('title')
+                    <span class="text-sm text-red-400">{{ $message }}</span>
+                    @enderror
+                </div>
+                <div>
+                    <label for="body" class="text-xl">Body</label>
+                    <input
+                           id="body"
+                           type="text"
+                           name="body"
+                           class="block w-full py-3 px-3 mt-2
+                            text-gray-800 appearance-none
+                            border-2 border-gray-100
+                            focus:text-gray-500 focus:outline-none focus:border-gray-200 rounded-md"
+                           value="{{ $post->body }}" />
+                    @error('body')
+                    <span class="text-sm text-red-400">{{ $message }}</span>
+                    @enderror
+                </div>
+                <button type="submit"
+                        class="w-full py-3 mt-10 bg-indigo-400 hover:bg-indigo-600 rounded-md
+                        font-medium text-white uppercase
+                        focus:outline-none hover:shadow-none">
+                    Update
+                </button>
+            </form>
+        </div>
+
+    </div>
+</x-guest-layout>
+```
+
+`resources\views\posts\index.blade.php` を編集
+
+```diff
+    // ...
+
+    @forelse ($posts as $post)
+    <tr>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $post->id }}
+        </td>
+        <td class="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+            {{ $post->title }}
+        </td>
+        <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
++           @can('update', $post)
+            <a href="{{ route('posts.edit', $post) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
++           @endcan
+
++           @can('delete', $post)
+            <form
+                    method="post"
+                    action="{{ route('posts.destroy', $post) }}"
+                    onsubmit="return confirm('Are you sure?')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
+            </form>
++           @endcan
+        </td>
+    </tr>
+    @empty
+    @endforelse
+
+    // ...
+```

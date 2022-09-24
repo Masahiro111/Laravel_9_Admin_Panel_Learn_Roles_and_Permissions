@@ -35,7 +35,11 @@
                             {{ $post->title }}
                         </td>
                         <td class="py-4 pl-3 pr-4 flex justify-end text-right text-sm font-medium sm:pr-6">
+                            @can('update', $post)
                             <a href="{{ route('posts.edit', $post) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                            @endcan
+
+                            @can('delete', $post)
                             <form
                                   method="post"
                                   action="{{ route('posts.destroy', $post) }}"
@@ -44,6 +48,7 @@
                                 @method('DELETE')
                                 <button type="submit" class="text-red-600 hover:text-red-900 pl-2 pr-2">Delete</a>
                             </form>
+                            @endcan
                         </td>
                     </tr>
                     @empty

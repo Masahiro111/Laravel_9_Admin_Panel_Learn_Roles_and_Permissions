@@ -50,7 +50,7 @@ class PostPolicy
     {
         // dd($user->role); // Role モデルインスタンス
         // dd($user->role()); // BelongsTo インスタンス
-        return $user->role->hasPermission('writer');
+        return $user->role->hasPermission('create');
     }
 
     /**
@@ -62,7 +62,7 @@ class PostPolicy
      */
     public function update(User $user, Post $post)
     {
-        //
+        return $user->role->hasPermission('update');
     }
 
     /**
@@ -74,7 +74,7 @@ class PostPolicy
      */
     public function delete(User $user, Post $post)
     {
-        //
+        return $user->role->hasPermission('delete');
     }
 
     /**
